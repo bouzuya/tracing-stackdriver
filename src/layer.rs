@@ -36,6 +36,31 @@ where
     )
 }
 
+impl<S, T, W>
+    From<
+        tracing_subscriber::fmt::Layer<
+            S,
+            tracing_subscriber::fmt::format::JsonFields,
+            tracing_subscriber::fmt::format::Format<tracing_subscriber::fmt::format::Json, T>,
+            W,
+        >,
+    > for Layer<S, W>
+where
+    S: Subscriber + for<'span> LookupSpan<'span>,
+    W: for<'writer> MakeWriter<'writer> + 'static,
+{
+    fn from(
+        layer: tracing_subscriber::fmt::Layer<
+            S,
+            tracing_subscriber::fmt::format::JsonFields,
+            tracing_subscriber::fmt::format::Format<tracing_subscriber::fmt::format::Json, T>,
+            W,
+        >,
+    ) -> Self {
+        Layer(layer.event_format(EventFormatter::default()))
+    }
+}
+
 /// A tracing-compatible Layer implementation for Stackdriver
 pub struct Layer<S, W = fn() -> io::Stdout>(
     tracing_subscriber::fmt::Layer<S, JsonFields, EventFormatter, W>,
